@@ -12,7 +12,6 @@ Portable skill catalog and installer for Codex and Claude-style agent runtimes.
 - `convex-streaming-agents`
 - `convex-r2-media`
 - `hyper-ui-skills`
-- `hypermoji`
 
 ## CLI
 
