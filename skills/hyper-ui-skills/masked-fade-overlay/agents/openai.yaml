@@ -1,0 +1,4 @@
+interface:
+  display_name: "Masked Fade Overlay"
+  short_description: "Blur and gradient fade with transparency masks"
+  default_prompt: "Use $masked-fade-overlay to implement blur that fades to transparent with a real alpha mask."

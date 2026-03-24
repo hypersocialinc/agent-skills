@@ -1,0 +1,4 @@
+interface:
+  display_name: "Hyper UI Skills"
+  short_description: "UI pattern router for Expo and Next.js"
+  default_prompt: "Use $hyper-ui-skills to pick the right UI pattern and implementation path."

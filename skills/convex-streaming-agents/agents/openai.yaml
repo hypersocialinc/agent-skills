@@ -1,0 +1,4 @@
+interface:
+  display_name: "Convex Streaming Agents"
+  short_description: "Streaming agent architecture and UI patterns for Convex"
+  default_prompt: "Use $convex-streaming-agents to build a Convex-backed streaming text agent with a polished client UX."

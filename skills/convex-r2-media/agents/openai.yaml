@@ -1,0 +1,4 @@
+interface:
+  display_name: "Convex R2 Media"
+  short_description: "Convex + Cloudflare R2 media architecture"
+  default_prompt: "Use $convex-r2-media to plan or review a Convex plus R2 media pipeline."

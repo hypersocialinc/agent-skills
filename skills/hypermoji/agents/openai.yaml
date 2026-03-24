@@ -1,0 +1,4 @@
+interface:
+  display_name: "Hypermoji"
+  short_description: "Generate mascots and emotes with the Hypermoji CLI"
+  default_prompt: "Use $hypermoji to create or manage Hypermoji mascots, jobs, and emotes from the CLI."

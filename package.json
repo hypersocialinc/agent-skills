@@ -1,0 +1,16 @@
+{
+  "name": "skills",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Portable agent skills and installer for Codex and Claude.",
+  "bin": {
+    "skills": "./bin/skills.js"
+  },
+  "scripts": {
+    "list": "node ./bin/skills.js list",
+    "test": "node ./bin/skills.js list"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
