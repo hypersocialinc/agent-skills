@@ -27,16 +27,46 @@ Install a skill into Codex:
 node bin/skills.js install convex-streaming-agents --target codex
 ```
 
+Install into all known targets:
+
+```bash
+node bin/skills.js install convex-streaming-agents --target all
+```
+
 Install into Claude:
 
 ```bash
 node bin/skills.js install convex-streaming-agents --target claude
 ```
 
+Install directly from GitHub:
+
+```bash
+node bin/skills.js install hypersocialinc/agent-skills/convex-streaming-agents --target codex
+```
+
+Install from a GitHub tree URL:
+
+```bash
+node bin/skills.js install https://github.com/hypersocialinc/agent-skills/tree/main/skills/convex-streaming-agents --dir ./tmp/skills
+```
+
 Install into a custom directory:
 
 ```bash
 node bin/skills.js install convex-streaming-agents --dir ./tmp/skills
+```
+
+Update an installed skill from its recorded source:
+
+```bash
+node bin/skills.js update convex-streaming-agents --target codex
+```
+
+Update from an explicit source:
+
+```bash
+node bin/skills.js update convex-streaming-agents --target codex --source hypersocialinc/agent-skills/convex-streaming-agents
 ```
 
 Show target presets:
@@ -52,4 +82,8 @@ node bin/skills.js targets
   - Claude: `~/.claude/agents`
   - Agents: `~/.agents/skills`
 - The CLI copies skill folders verbatim, including nested references and agent metadata.
-- Package naming for future `npx skills` publishing can be finalized later without changing the skill tree.
+- Installed skills get a local `.agent-skill-install.json` file so `update` can reuse the original source.
+- GitHub source specs currently support:
+  - `owner/repo/skill-name`
+  - `owner/repo/path/to/skill`
+  - `https://github.com/owner/repo/tree/<ref>/path/to/skill`

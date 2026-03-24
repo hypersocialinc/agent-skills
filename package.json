@@ -8,7 +8,7 @@
   },
   "scripts": {
     "list": "node ./bin/skills.js list",
-    "test": "node ./bin/skills.js list"
+    "test": "node ./bin/skills.js list && node ./bin/skills.js targets"
   },
   "engines": {
     "node": ">=18"
