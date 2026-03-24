@@ -1,89 +1,52 @@
 # Agent Skills
 
-Portable skill catalog and installer for Codex and Claude-style agent runtimes.
+Reusable agent skills for Codex, Claude Code, and other runtimes that support the open skills ecosystem.
 
-## Repo Layout
+This repo is meant to be installed with the official `skills` CLI, not a custom installer.
 
-- `skills/`: canonical skill source folders
-- `bin/skills.js`: local installer CLI
+## Install
+
+List skills in this repo:
+
+```bash
+npx skills add hypersocialinc/agent-skills --list
+```
+
+Install a specific skill into Codex:
+
+```bash
+npx skills add hypersocialinc/agent-skills --skill convex-streaming-agents --agent codex
+```
+
+Install a specific skill into Claude Code:
+
+```bash
+npx skills add hypersocialinc/agent-skills --skill convex-streaming-agents --agent claude-code
+```
+
+Install all skills:
+
+```bash
+npx skills add hypersocialinc/agent-skills --all
+```
 
 ## Included Skills
 
 - `convex-streaming-agents`
+  Build streaming text agents on Convex with Vercel AI SDK, persisted run state, tool traces, and polished client UX patterns like thinking dots and character reveal.
 - `convex-r2-media`
+  Use Convex with Cloudflare R2 correctly for durable public media delivery and migrations away from signed storage URLs.
 - `hyper-ui-skills`
+  Route reusable UI pattern work for Expo and Next.js to focused implementation guides like `masked-fade-overlay`.
 
-## CLI
+## Repo Layout
 
-List available skills:
-
-```bash
-node bin/skills.js list
-```
-
-Install a skill into Codex:
-
-```bash
-node bin/skills.js install convex-streaming-agents --target codex
-```
-
-Install into all known targets:
-
-```bash
-node bin/skills.js install convex-streaming-agents --target all
-```
-
-Install into Claude:
-
-```bash
-node bin/skills.js install convex-streaming-agents --target claude
-```
-
-Install directly from GitHub:
-
-```bash
-node bin/skills.js install hypersocialinc/agent-skills/convex-streaming-agents --target codex
-```
-
-Install from a GitHub tree URL:
-
-```bash
-node bin/skills.js install https://github.com/hypersocialinc/agent-skills/tree/main/skills/convex-streaming-agents --dir ./tmp/skills
-```
-
-Install into a custom directory:
-
-```bash
-node bin/skills.js install convex-streaming-agents --dir ./tmp/skills
-```
-
-Update an installed skill from its recorded source:
-
-```bash
-node bin/skills.js update convex-streaming-agents --target codex
-```
-
-Update from an explicit source:
-
-```bash
-node bin/skills.js update convex-streaming-agents --target codex --source hypersocialinc/agent-skills/convex-streaming-agents
-```
-
-Show target presets:
-
-```bash
-node bin/skills.js targets
-```
+- `skills/<skill-name>/SKILL.md`
+- optional `agents/openai.yaml`
+- optional `references/`
 
 ## Notes
 
-- Current target presets are based on local conventions:
-  - Codex: `~/.codex/skills`
-  - Claude: `~/.claude/agents`
-  - Agents: `~/.agents/skills`
-- The CLI copies skill folders verbatim, including nested references and agent metadata.
-- Installed skills get a local `.agent-skill-install.json` file so `update` can reuse the original source.
-- GitHub source specs currently support:
-  - `owner/repo/skill-name`
-  - `owner/repo/path/to/skill`
-  - `https://github.com/owner/repo/tree/<ref>/path/to/skill`
+- This repo follows the layout expected by the public `skills` tool.
+- Skills are portable, but agent behavior can still vary a bit by runtime.
+- If you need project-specific operational skills, keep those in a separate repo instead of mixing them into this shared catalog.
