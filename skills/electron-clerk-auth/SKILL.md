@@ -40,10 +40,12 @@ Use this skill for any auth work that touches:
 ## Key Files
 
 - `apps/electron/src/main.tsx`
+- `apps/electron/src/lib/auth.ts`
 - `apps/electron/src/lib/clerkElectron.ts`
 - `apps/electron/src/lib/clerkElectronFetch.ts`
 - `apps/electron/src/hooks/useAuthDeepLink.ts`
 - `apps/electron/electron/main.ts`
+- `apps/electron/electron/preload.ts`
 - `apps/marketing/app/auth/electron/page.tsx`
 - `apps/marketing/app/auth/electron/actions.ts`
 - `convex/auth.config.ts`
@@ -51,10 +53,25 @@ Use this skill for any auth work that touches:
 
 ## Validation Commands
 
+For Electron-only changes:
 ```bash
 pnpm --filter @hypersurge/electron typecheck
 pnpm --filter @hypersurge/electron exec vitest run src/__tests__/lib/clerkElectronFetch.test.ts
 pnpm --filter @hypersurge/electron build:ci
 ```
+
+For marketing auth page changes:
+```bash
+pnpm --filter @hypersurge/marketing build
+# Then test the full browser -> Electron sign-in flow
+```
+
+For Convex auth config changes:
+```bash
+npx convex deploy  # or convex dev for local
+# Verify Clerk issuer domain and secret key match production
+```
+
+If the touched layer is outside Electron (marketing or Convex), validate cross-service by running the full packaged sign-in flow — Electron typecheck alone won't catch mismatched keys or issuer domains.
 
 If the issue is production-only, do not stop at unit/build validation. Run a packaged Electron sign-in smoke test.
