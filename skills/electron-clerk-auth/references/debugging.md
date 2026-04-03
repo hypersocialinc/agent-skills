@@ -118,6 +118,31 @@ Typical failure signatures:
 - Convex throws that `CLERK_SECRET_KEY` is missing
 - repo import UI shows signed-in user but cannot load repositories
 
+Best immediate check in production:
+
+```bash
+npx convex logs --prod --history 200 --jsonl | rg "github:listMyGithubRepos|CLERK_SECRET_KEY|GitHub repo list failed|Clerk OAuth token lookup failed"
+```
+
+Exact HyperCoder production incident:
+- Electron showed: `GitHub import is temporarily unavailable. Try again in a moment.`
+- Convex prod log showed:
+  - `[github] CLERK_SECRET_KEY is not configured on Convex.`
+  - `ConvexError: {"code":"github_unavailable", ...}`
+
+Interpretation:
+- this is not a GitHub repo-scope problem
+- this is not a stale Electron build problem
+- it means the Convex production deployment is missing `CLERK_SECRET_KEY`
+
+Fix:
+
+```bash
+npx convex env set CLERK_SECRET_KEY 'sk_live_...' --prod
+```
+
+Then retry the installed app. A second code deploy is not required for that specific issue.
+
 ## 5. Convex Calls Fail While Clerk UI Looks Healthy
 
 Relevant file:

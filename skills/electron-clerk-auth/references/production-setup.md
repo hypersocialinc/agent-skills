@@ -76,6 +76,22 @@ If Convex trusts a different issuer than the session Electron is actually using,
 Convex uses this to retrieve the user’s GitHub social access token from Clerk.
 If this is missing or tied to the wrong Clerk instance, GitHub repo listing/import fails even when the user appears signed in.
 
+Operational note:
+- `npx convex deploy --prod` pushes code only. It does not backfill missing production env vars.
+- Set or verify production Convex secrets separately with:
+
+```bash
+npx convex env list --prod
+npx convex env get CLERK_JWT_ISSUER_DOMAIN --prod
+npx convex env get CLERK_SECRET_KEY --prod
+```
+
+If `CLERK_SECRET_KEY` is missing in production, fix it with:
+
+```bash
+npx convex env set CLERK_SECRET_KEY 'sk_live_...' --prod
+```
+
 ## Clerk Dashboard Requirements
 
 The production Clerk instance needs all of the following aligned:
@@ -219,6 +235,14 @@ Usually one of:
 - Convex `CLERK_SECRET_KEY` missing or wrong
 - GitHub social token not available in Clerk
 - GitHub social connection missing required scopes
+
+Exact production signature seen in HyperCoder:
+- Electron repo picker message: `GitHub import is temporarily unavailable. Try again in a moment.`
+- Convex prod logs for `github:listMyGithubRepos`:
+  - `[github] CLERK_SECRET_KEY is not configured on Convex.`
+  - `ConvexError: {"code":"github_unavailable", ...}`
+
+If you see that pair, the fix is to set `CLERK_SECRET_KEY` on the Convex production deployment, not to change Electron code or GitHub OAuth scopes.
 
 ### Convex auth fails while Clerk UI looks signed in
 
