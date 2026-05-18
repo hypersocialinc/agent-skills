@@ -1,0 +1,4 @@
+interface:
+  display_name: "SwiftUI Collapsible Pull Sheet"
+  short_description: "Build custom SwiftUI pull sheets"
+  default_prompt: "Use $swiftui-collapsible-pull-sheet to build a collapsed-to-expanded SwiftUI pull sheet."

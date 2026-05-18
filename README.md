@@ -38,6 +38,8 @@ npx skills add hypersocialinc/agent-skills --all
   Use Convex with Cloudflare R2 correctly for durable public media delivery and migrations away from signed storage URLs.
 - `hyper-ui-skills`
   Route reusable UI pattern work for Expo and Next.js to focused implementation guides like `masked-fade-overlay`.
+- `swiftui-collapsible-pull-sheet`
+  Build custom SwiftUI pull sheets that collapse into compact pills, expand with drag or tap, morph their surface and content, and coordinate surrounding iOS chrome.
 
 ## Repo Layout
 
