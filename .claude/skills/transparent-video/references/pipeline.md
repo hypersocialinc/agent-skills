@@ -100,39 +100,12 @@ ffmpeg -y -framerate 24 -i frames_clean/f_%04d.png \
 
 Flag breakdown:
 
-- `-c:v hevc_videotoolbox`: macOS-native HEVC encoder with alpha support via VideoToolbox.
-- `-allow_sw 1`: fall back to software encoding if hardware refuses (rare, but happens on smaller inputs).
-- `-alpha_quality 0.7`: 0.0 = lossy/fast alpha, 1.0 = near-lossless. 0.7 is a good size/quality balance.
+- `-c:v hevc_videotoolbox`: macOS-native HEVC encoder. **This is the only ffmpeg HEVC encoder that supports an alpha channel in a single `.mov`.** Other systems can use `libx265` + a separate alpha track, but the resulting file isn't iOS-native.
+- `-allow_sw 1`: fall back to software encoding when hardware (Apple Silicon AMX) refuses (rare, but happens on smaller inputs).
+- `-alpha_quality 0.7`: 0.0 = fast/lossy alpha, 1.0 = near-lossless. 0.7 is a good size/quality balance.
 - `-tag:v hvc1`: ATOM tag — iOS / QuickTime require `hvc1` (not `hev1`) for native playback with alpha.
-- `-pix_fmt bgra`: alpha-aware input pixel format. The encoder negotiates the output stream pixel format itself (reports as `yuv420p` in ffprobe, but the alpha channel is preserved as VideoToolbox auxiliary data).
+- `-pix_fmt bgra`: the alpha-aware pixel format. Without this, ffmpeg falls back to a non-alpha format and the output looks fine but has no transparency.
 - `scale=720:720`: downsize for app bundle. 720² @ 24fps × 5s ≈ 1.3 MB. Higher resolutions inflate quickly: 960² adds ~70%, 1024² adds 2×.
-
-### Verifying alpha is preserved
-
-`ffprobe -show_streams output.mov` reports `pix_fmt=yuv420p` even when alpha is intact — HEVC with alpha stores the alpha plane as VideoToolbox auxiliary data, not in the primary stream's pixel format. **Don't trust the ffprobe pix_fmt to diagnose alpha.**
-
-To actually check, extract a frame with an explicit alpha-aware pix_fmt:
-
-```bash
-ffmpeg -i output.mov -vframes 1 -pix_fmt rgba frame.png
-file frame.png    # → "PNG image data, ... 8-bit/color RGBA"
-```
-
-Open `frame.png` in an image viewer; if you see the checkerboard transparency pattern around the subject, alpha is intact. (Plain `ffmpeg -i mov -vframes 1 frame.png` without `-pix_fmt rgba` defaults to RGB and composites the alpha onto black — which makes the file *look* like it has no alpha when it does.) When in doubt, just drop the `.mov` into the target app and look at it against a non-black surface.
-
-### Fallback: ProRes 4444 → avconvert
-
-If `hevc_videotoolbox` ever stops preserving alpha in a future ffmpeg build, Apple's `/usr/bin/avconvert` is the failsafe — it calls VideoToolbox directly with `kVTCompressionPropertyKey_AlphaChannelMode` set, and produces a slightly larger (~2-3 MB) but bulletproof HEVC alpha file:
-
-```bash
-ffmpeg -i frames_clean/f_%04d.png \
-  -c:v prores_ks -profile:v 4 -pix_fmt yuva444p10le \
-  intermediate.mov
-avconvert -p PresetHEVCHighestQualityWithAlpha \
-  -s intermediate.mov -o output.mov --replace
-```
-
-Only switch to this when the simple path provably fails.
 
 ## Verification
 

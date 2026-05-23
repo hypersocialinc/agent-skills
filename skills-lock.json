@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "transparent-video": {
+      "source": "hypersocialinc/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/transparent-video/SKILL.md",
+      "computedHash": "bdf73e6c8006cec6a080df4aa28c01108042d9491c73dd9faa577c3f292b7a39"
+    }
+  }
+}

@@ -20,40 +20,23 @@ Failure modes hit while developing this pipeline, and how to recognize them. Rea
 
 If you still see a tiny seam after `end_image_url`, the motion prompt is too active — SeedDance is straining to fit the round trip into the requested seconds. Try a longer duration (more frames to interpolate) or a more restrained prompt: "subtle ambient motion that returns to rest" beats "characters wave and dance."
 
-## "ffprobe says pix_fmt=yuv420p — did I lose the alpha?"
-
-**Symptom**: `ffprobe -show_streams output.mov` reports `pix_fmt=yuv420p` after encoding, and you panic that alpha was dropped.
-
-**Reality check**: HEVC with alpha stores alpha as a VideoToolbox auxiliary channel, not in the primary stream's pixel format. `ffprobe` only reports the primary stream's format. The alpha is still there and `AVPlayer` / web `<video>` will composite it correctly.
-
-**How to verify alpha is actually present:**
-
-```bash
-ffmpeg -i output.mov -vframes 1 -pix_fmt rgba check.png
-file check.png    # expect: "PNG image data, ... 8-bit/color RGBA"
-```
-
-Open `check.png` in Preview / any image viewer; if you see the checkerboard transparency pattern, alpha is intact.
-
-**Crucially**, `ffmpeg -i output.mov -vframes 1 frame.png` **without `-pix_fmt rgba`** defaults to RGB and composites the alpha onto black — making the file *look* broken when it isn't. Always pass `-pix_fmt rgba` when extracting a single frame for verification.
-
-When in doubt, just drop the `.mov` into the target app and look at it against a non-black surface. If the subject renders cleanly on a light background, alpha is working.
-
 ## "Output `.mov` is 50+ MB"
 
 **Symptom**: you encoded HEVC alpha but the file is huge.
 
-**Root cause**: you stopped at the ProRes 4444 intermediate (from the fallback path in `pipeline.md`) without running the avconvert compression step. ProRes is near-lossless.
+**Root cause**: you accidentally used a ProRes 4444 intermediate as the final output, or didn't downsize. ProRes is a near-lossless intermediate codec.
 
-**Fix**: switch back to the default `hevc_videotoolbox` path (1-2 MB output), or if you need the avconvert fallback, finish it with:
+**Fix**: re-encode through `hevc_videotoolbox` with the flags in `pipeline.md`. Specifically:
 
 ```bash
-avconvert \
-  -p PresetHEVCHighestQualityWithAlpha \
-  -s big-prores.mov \
-  -o small-hevc.mov \
-  --replace
+ffmpeg -i big.mov \
+  -vf "scale=720:720" \
+  -c:v hevc_videotoolbox -allow_sw 1 -alpha_quality 0.7 \
+  -tag:v hvc1 -pix_fmt bgra \
+  small.mov
 ```
+
+A 720² 5s 24fps clip should land at 1–2 MB. If you need it smaller, lower `-alpha_quality` to 0.5.
 
 ## "Alpha is there, but the edges have a colored halo"
 
