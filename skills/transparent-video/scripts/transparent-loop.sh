@@ -148,7 +148,7 @@ echo "       → $CLEAN_COUNT clean frames"
 # ────────────────────────────────────────────────────────────────────────
 # 5. Encode HEVC alpha.
 # ────────────────────────────────────────────────────────────────────────
-echo "[5/5] encoding HEVC `hvc1` with alpha at ${SIZE}x${SIZE} ${FPS}fps..."
+echo "[5/5] encoding HEVC hvc1 with alpha at ${SIZE}x${SIZE} ${FPS}fps..."
 ffmpeg -y -v error \
   -framerate "$FPS" -i "$WORK_DIR/frames_clean/f_%04d.png" \
   -vf "scale=${SIZE}:${SIZE}" \
