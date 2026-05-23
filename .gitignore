@@ -1,3 +1,8 @@
 node_modules
 .DS_Store
 tmp-install
+# `npx skills add` writes local install copies here. Catalog source
+# of truth is `skills/`; install dirs are per-machine.
+.agents/skills
+.claude/skills
+skills-lock.json

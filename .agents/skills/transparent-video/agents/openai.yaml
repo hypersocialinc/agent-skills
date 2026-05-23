@@ -1,4 +1,0 @@
-interface:
-  display_name: "Transparent Video Loop"
-  short_description: "Animate a still image into a transparent HEVC loop"
-  default_prompt: "Use $transparent-video to animate a still image into a transparent looping .mov via SeedDance + BiRefNet + HEVC alpha."
