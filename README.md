@@ -45,6 +45,16 @@ npx skills add hypersocialinc/agent-skills --all
 - `instax-mini-link-ble`
   Print photos to a Fujifilm Instax Mini Link 1/2/3 over Bluetooth LE from Swift/CoreBluetooth, Node.js, Web Bluetooth, or Python. Covers the full opcode map, packet framing, image requirements (baseline JPEG, 600×800, ≤105 KB), and the specific gotchas — progressive JPEG, off-by-one status parsing, magic-byte case swap — that cause garbled prints or silent timeouts.
 
+## Related skills (hosted elsewhere)
+
+These follow the same `npx skills add` install pattern but live in their tool's repo so they stay in sync with the underlying CLI:
+
+- [`instax-print`](https://github.com/hypersocialinc/instax-mini-link-3-print-harness/tree/main/skills/instax-print) — Operational skill for actually printing a photo to a Fujifilm Instax Mini Link from Claude Code / Codex. Hosted in `hypersocialinc/instax-mini-link-3-print-harness` so the skill ships alongside the CLI it invokes.
+
+```bash
+npx skills add hypersocialinc/instax-mini-link-3-print-harness --skill instax-print --agent claude-code
+```
+
 ## Repo Layout
 
 - `skills/<skill-name>/SKILL.md`
