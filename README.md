@@ -42,6 +42,8 @@ npx skills add hypersocialinc/agent-skills --all
   Build custom SwiftUI pull sheets that collapse into compact pills, expand with drag or tap, morph their surface and content, and coordinate surrounding iOS chrome.
 - `transparent-video`
   Generate a short looping transparent video (`hvc1` HEVC with alpha) from a single still image. SeedDance 2 image-to-video (with optional closed-loop end-frame anchoring) → BiRefNet v2 Matting per frame in parallel → HEVC alpha encode. ~$0.65 and 3–5 min for a 5s 720² loop that plays natively in iOS, web, and Android.
+- `instax-mini-link-ble`
+  Print photos to a Fujifilm Instax Mini Link 1/2/3 over Bluetooth LE from Swift/CoreBluetooth, Node.js, Web Bluetooth, or Python. Covers the full opcode map, packet framing, image requirements (baseline JPEG, 600×800, ≤105 KB), and the specific gotchas — progressive JPEG, off-by-one status parsing, magic-byte case swap — that cause garbled prints or silent timeouts.
 
 ## Repo Layout
 

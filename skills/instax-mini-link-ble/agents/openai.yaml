@@ -1,0 +1,4 @@
+interface:
+  display_name: "Instax Mini Link BLE"
+  short_description: "Print to Instax Mini Link 1/2/3 over BLE"
+  default_prompt: "Use $instax-mini-link-ble to wire up printing to a Fujifilm Instax Mini Link printer over Bluetooth LE (Swift/CoreBluetooth, Node.js, Web Bluetooth, or Python)."
