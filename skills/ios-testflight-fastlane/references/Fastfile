@@ -1,0 +1,206 @@
+# <YourApp> iOS TestFlight lanes.
+#
+# Concrete extraction — adapt the constants marked `CHANGE ME`. This is a
+# working starting point, not a parameterized template: copy it to
+# `apps/ios/fastlane/Fastfile`, change the constants, and run.
+#
+# Secrets/config load from the gitignored `.env.testflight.local` at the
+# repo root; shell env vars take precedence over the file (see before_all).
+
+require "dotenv"
+require "shellwords"
+
+# IOS_DIR / ROOT_DIR assume this file lives at <repo>/apps/ios/fastlane/Fastfile.
+# If the layout differs, adjust how many ".." levels reach the repo root.
+IOS_DIR = File.expand_path("..", __dir__)
+ROOT_DIR = File.expand_path("../..", IOS_DIR)
+
+SCHEME = "YourApp"                          # CHANGE ME — Xcode scheme name
+CONFIGURATION = "Release"
+BUNDLE_ID = "com.yourorg.yourapp"           # CHANGE ME — app bundle id
+TEAM_ID = "XXXXXXXXXX"                      # CHANGE ME — Apple Developer Team ID
+PROJECT_PATH = File.join(IOS_DIR, "#{SCHEME}.xcodeproj")
+BUILD_ROOT = File.join(IOS_DIR, "build", "testflight")
+
+# CHANGE ME — one Info.plist per target whose version must move in lockstep.
+# A single-target app lists only the app plist. Add a line per extension
+# (widgets, notification service/content, etc.).
+PLISTS = [
+  File.join(IOS_DIR, SCHEME, "Info.plist"),
+  # File.join(IOS_DIR, "#{SCHEME}Widgets", "Info.plist"),
+  # File.join(IOS_DIR, "#{SCHEME}NotificationService", "Info.plist"),
+].freeze
+
+before_all do
+  # Dotenv.load (not overload): values already set in the shell env win,
+  # so CI/one-off overrides take precedence over the local file.
+  Dotenv.load(File.join(ROOT_DIR, ".env.testflight.local"))
+end
+
+def asc_api_key
+  %w[ASC_API_KEY_ID ASC_API_ISSUER_ID ASC_API_KEY_PATH].each do |var|
+    UI.user_error!("#{var} is required (set it in .env.testflight.local)") if ENV[var].to_s.empty?
+  end
+
+  key_path = File.expand_path(ENV["ASC_API_KEY_PATH"])
+  UI.user_error!("ASC_API_KEY_PATH does not exist: #{key_path}") unless File.file?(key_path)
+
+  app_store_connect_api_key(
+    key_id: ENV["ASC_API_KEY_ID"],
+    issuer_id: ENV["ASC_API_ISSUER_ID"],
+    key_filepath: key_path
+  )
+end
+
+# Validates every plist agrees on CFBundleShortVersionString and returns
+# [marketing_version, highest_local_build].
+def read_plist_versions
+  marketing_version = nil
+  highest_build = 0
+
+  PLISTS.each do |plist|
+    UI.user_error!("missing plist: #{plist}") unless File.file?(plist)
+
+    version = get_info_plist_value(path: plist, key: "CFBundleShortVersionString")
+    build = get_info_plist_value(path: plist, key: "CFBundleVersion")
+
+    marketing_version ||= version
+    unless version == marketing_version
+      UI.user_error!("marketing version mismatch in #{plist}: #{version} != #{marketing_version}")
+    end
+    unless build.to_s.match?(/\A\d+\z/)
+      UI.user_error!("CFBundleVersion must be numeric in #{plist}: #{build}")
+    end
+
+    highest_build = [highest_build, build.to_i].max
+  end
+
+  UI.user_error!("CFBundleShortVersionString is empty in #{PLISTS[0]}") if marketing_version.to_s.empty?
+  [marketing_version, highest_build]
+end
+
+def signing_xcargs
+  args = ["-allowProvisioningUpdates"]
+
+  if ENV["TESTFLIGHT_SIGNING_AUTH_MODE"] == "api_key"
+    key_path = File.expand_path(ENV["ASC_API_KEY_PATH"].to_s)
+    args += [
+      "-authenticationKeyPath #{key_path.shellescape}",
+      "-authenticationKeyID #{ENV['ASC_API_KEY_ID'].to_s.shellescape}",
+      "-authenticationKeyIssuerID #{ENV['ASC_API_ISSUER_ID'].to_s.shellescape}",
+    ]
+  end
+
+  args += ["DEVELOPMENT_TEAM=#{TEAM_ID}", "CODE_SIGN_STYLE=Automatic"]
+  args.join(" ")
+end
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Build and upload <YourApp> to TestFlight."
+  desc "Options: skip_upload:true (archive/export only), build_number:N (explicit CFBundleVersion)"
+  lane :beta do |options|
+    marketing_version, local_max = read_plist_versions
+
+    api_key = asc_api_key
+
+    build_number =
+      if options[:build_number]
+        explicit = options[:build_number].to_i
+        UI.user_error!("build_number must be > current local max #{local_max}") unless explicit > local_max
+        explicit
+      else
+        remote_max = latest_testflight_build_number(
+          api_key: api_key,
+          app_identifier: BUNDLE_ID,
+          initial_build_number: local_max
+        )
+        [remote_max.to_i, local_max].max + 1
+      end
+
+    UI.important("#{SCHEME} TestFlight release: #{marketing_version} (#{build_number})")
+
+    PLISTS.each do |plist|
+      set_info_plist_value(path: plist, key: "CFBundleVersion", value: build_number.to_s)
+      UI.message("  #{plist.sub("#{ROOT_DIR}/", '')} -> #{build_number}")
+    end
+
+    # CHANGE ME / REMOVE ME — only for XcodeGen projects. Regenerate the
+    # .xcodeproj from project.yml before archiving. Delete this line if the
+    # .xcodeproj is committed rather than generated. fastlane's sh runs from
+    # the fastlane/ dir, so cd explicitly.
+    sh("cd #{IOS_DIR.shellescape} && xcodegen generate")
+
+    xcargs = signing_xcargs
+    archive_path = File.join(BUILD_ROOT, "archives", "#{SCHEME}-#{marketing_version}-#{build_number}.xcarchive")
+    export_path = File.join(BUILD_ROOT, "exports", "#{SCHEME}-#{marketing_version}-#{build_number}")
+
+    gym(
+      project: PROJECT_PATH,
+      scheme: SCHEME,
+      configuration: CONFIGURATION,
+      destination: "generic/platform=iOS",
+      derived_data_path: File.join(IOS_DIR, "DerivedData"),
+      archive_path: archive_path,
+      output_directory: export_path,
+      output_name: SCHEME,
+      # GOTCHA: older fastlane rejects "app-store-connect"; "app-store" is the
+      # legacy name for the same destination and Xcode still accepts it.
+      export_method: "app-store",
+      export_team_id: TEAM_ID,
+      export_options: {
+        destination: "export",
+        signingStyle: "automatic",
+        manageAppVersionAndBuildNumber: false,
+        stripSwiftSymbols: true,
+        uploadSymbols: true,
+      },
+      # GOTCHA: signing args must go to BOTH the archive step (xcargs) and the
+      # -exportArchive step (export_xcargs); gym does not forward xcargs.
+      xcargs: xcargs,
+      export_xcargs: xcargs
+    )
+
+    ipa_path = lane_context[SharedValues::IPA_OUTPUT_PATH]
+    UI.success("IPA: #{ipa_path}")
+
+    if options[:skip_upload]
+      UI.important("Upload skipped (skip_upload:true).")
+      next
+    end
+
+    UI.user_error!("ASC_APPLE_ID (numeric App Store Connect app id) is required to upload") if ENV["ASC_APPLE_ID"].to_s.empty?
+
+    upload_to_testflight(
+      api_key: api_key,
+      apple_id: ENV["ASC_APPLE_ID"], # numeric ASC app id, NOT an email
+      app_identifier: BUNDLE_ID,
+      ipa: ipa_path,
+      skip_waiting_for_build_processing: true,
+      skip_submission: true
+    )
+
+    UI.success("Uploaded build #{build_number} for #{marketing_version} to TestFlight.")
+  end
+
+  desc "Upload an existing IPA to TestFlight without rebuilding."
+  desc "Usage: fastlane upload ipa:/path/to/<YourApp>.ipa"
+  lane :upload do |options|
+    ipa_path = File.expand_path(options[:ipa].to_s)
+    UI.user_error!("Pass ipa:/path/to/app.ipa") if options[:ipa].to_s.empty?
+    UI.user_error!("IPA does not exist: #{ipa_path}") unless File.file?(ipa_path)
+    UI.user_error!("ASC_APPLE_ID (numeric App Store Connect app id) is required to upload") if ENV["ASC_APPLE_ID"].to_s.empty?
+
+    upload_to_testflight(
+      api_key: asc_api_key,
+      apple_id: ENV["ASC_APPLE_ID"],
+      app_identifier: BUNDLE_ID,
+      ipa: ipa_path,
+      skip_waiting_for_build_processing: true,
+      skip_submission: true
+    )
+
+    UI.success("Uploaded #{ipa_path} to TestFlight.")
+  end
+end

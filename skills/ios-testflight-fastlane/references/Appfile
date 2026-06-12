@@ -1,0 +1,4 @@
+app_identifier("com.yourorg.yourapp")   # CHANGE ME — must match BUNDLE_ID in Fastfile
+team_id("XXXXXXXXXX")                     # CHANGE ME — Apple Developer Team ID
+# Intentionally NO apple_id(email) here: providing one nudges fastlane toward
+# Apple ID / 2FA auth paths even when an App Store Connect API key is configured.

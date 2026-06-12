@@ -1,0 +1,4 @@
+interface:
+  display_name: "iOS TestFlight with fastlane"
+  short_description: "Set up fastlane TestFlight releases for an iOS app"
+  default_prompt: "Use $ios-testflight-fastlane to wire a fastlane beta lane that builds and uploads a native iOS app to TestFlight."
