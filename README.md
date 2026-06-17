@@ -46,6 +46,8 @@ npx skills add hypersocialinc/agent-skills --all
   Print photos to a Fujifilm Instax Mini Link 1/2/3 over Bluetooth LE from Swift/CoreBluetooth, Node.js, Web Bluetooth, or Python. Covers the full opcode map, packet framing, image requirements (baseline JPEG, 600×800, ≤105 KB), and the specific gotchas — progressive JPEG, off-by-one status parsing, magic-byte case swap — that cause garbled prints or silent timeouts.
 - `ios-testflight-fastlane`
   Set up one-command TestFlight releases for a native iOS app with fastlane: App Store Connect API-key auth, automatic build numbering stamped across every target's `Info.plist`, optional XcodeGen regeneration, `gym` archive/export, and `upload_to_testflight`. Ships a working `Fastfile`/`Appfile`/env template plus the hard-won gotchas (`export_method` alias, dual xcargs, numeric app id).
+- `universal-links-deep-linking`
+  Make tapped https links open a native iOS or Expo/React Native app when installed and fall back to the web page otherwise — Apple Universal Links + Android App Links. Covers the shared website half (`apple-app-site-association`, `assetlinks.json`, correct content-type/no-redirect serving), the per-stack app config (native entitlements + `onOpenURL`/`NSUserActivity`, Expo `associatedDomains`/`intentFilters` + expo-router), and the silent-failure gotchas (apex→www redirect, Apple CDN cache + `?mode=developer`, signing-fingerprint mismatch, device-only tap testing). Ships AASA/assetlinks templates and a Next.js route handler.
 
 ## Related skills (hosted elsewhere)
 

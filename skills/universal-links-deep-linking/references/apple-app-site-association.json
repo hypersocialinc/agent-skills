@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["TEAMID12345.com.example.app"],
+        "components": [
+          {
+            "/": "/item/*",
+            "comment": "Deep link item detail URLs into the app."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Universal Links & App Links"
+  short_description: "Make https links open the app (iOS/Android), web fallback otherwise"
+  default_prompt: "Use $universal-links-deep-linking to set up Apple Universal Links and Android App Links so shared https links open the app when installed and the web page otherwise."
