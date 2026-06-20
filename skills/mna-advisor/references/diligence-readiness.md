@@ -21,9 +21,9 @@ An inaccurate cap table causes disputes, delays, and derailed deals — and it's
 ## The data room
 
 - Have it **ready early** (ideally before you're in active talks) — building under pressure produces wrong versions and gaps.
-- Cover the standard set: incorporation docs, cap table, financials (actuals + model), IP assignments, key contracts, material agreements, employee/option docs, product/roadmap, key metrics.
 - **Curate, don't dump.** Too many documents buries the ones that matter and slows the buyer; include what's relevant and well-organized.
 - **Review everything before granting access** — every doc must be accurate and consistent with what you've represented. A contradiction between the data room and your reps is a credibility (and indemnity) problem.
+- To actually build it — folder structure, per-section checklist, staged disclosure, and a scaffold script — see `./data-room.md`.
 
 ## Other common surprises to pre-empt
 
