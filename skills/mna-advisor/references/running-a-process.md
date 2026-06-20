@@ -10,6 +10,10 @@ A single buyer setting the terms is not a negotiation — it's an order-taker re
 - **Never single-thread.** One champion who's on leave, exiting, or lukewarm is a fragile deal. One buyer is a price-taker's position. Cultivate multiple internal sponsors and, where possible, multiple acquirers.
 - **Competitive tension is the lever** — you rarely have to *name* the other party (often you must not). The founder's calm willingness to walk, and their timeline, do the work.
 
+## The exclusivity cliff
+
+This is where process leverage dies: the moment you grant exclusivity / no-shop, the buyer knows you can't talk to anyone else for 30–60 days, and terms re-trade in their favor. The process rule is simply **don't spend your leverage before you've used it** — lock economics + key terms first, grant exclusivity last, and read a push for *early* exclusivity as the cue to push back on terms. (Term-level mechanics — window length, no-auto-renew, escrow, reps — are in `./references/deal-mechanics.md`.)
+
 ## Sequencing
 
 Match the conversation to the deal's actual stage. Common ordering for a strategic acquisition:
