@@ -23,7 +23,7 @@ When the company won't clear its preferences:
 
 ## The three consideration buckets (acqui-hire of an underwater company)
 
-A clean template (e.g., the **Ready Player Me** structure — underwater, still a real acquisition):
+A clean template for an underwater company that's still a *real acquisition* (the structure commonly used when a valuable team is bought out of an underwater cap table):
 
 1. **Consideration for investors** — clears consent + gives them something + makes it an *acquisition*. Modest.
 2. **Carve-out for founders NOT joining** — paid out separately, outside the waterfall. Skip if there's only one relevant founder.

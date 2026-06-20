@@ -63,5 +63,6 @@ To capture new information correctly, follow `./references/capturing-updates.md`
 - `./references/deal-structures.md` — underwater mechanics, preference stacks, consideration buckets, carve-outs, retention/earn-out shape, team retention pool, vesting acceleration (single/double trigger), formal management carve-out plans + board fiduciary risk, tax (ordinary vs. cap-gains/QSBS, §280G golden parachute), sizing backward.
 - `./references/deal-mechanics.md` — the paper: LOI/term sheet, exclusivity/no-shop and leverage timing, asset-vs-stock, escrow/holdback, reps & warranties/indemnification/survival/caps, earn-out protections.
 - `./references/running-a-process.md` — BATNA development, competitive tension, sequencing, posture, information control, anchoring, advisor triangulation, reading acquirer culture.
-- `./references/diligence-readiness.md` — IP-assignment gaps, clean cap table, the data room, and the common deal-killers that surface in diligence.
+- `./references/diligence-readiness.md` — IP-assignment gaps, clean cap table, and the common deal-killers that surface in diligence.
+- `./references/data-room.md` — how to build the data/deal room: folder structure, per-section checklist, staged disclosure, and a `scripts/scaffold-dataroom.sh` scaffolder.
 - `./references/capturing-updates.md` — the retention routine for logging a call/email/decision/signal into the deal vault.
