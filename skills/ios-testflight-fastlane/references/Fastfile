@@ -101,6 +101,21 @@ platform :ios do
   desc "Build and upload <YourApp> to TestFlight."
   desc "Options: skip_upload:true (archive/export only), build_number:N (explicit CFBundleVersion)"
   lane :beta do |options|
+    # CHANGE ME / REMOVE ME — only for XcodeGen projects. Regenerate the
+    # .xcodeproj from project.yml before doing anything else. Delete this
+    # line if the .xcodeproj is committed rather than generated. fastlane's
+    # sh runs from the fastlane/ dir, so cd explicitly.
+    #
+    # GOTCHA: xcodegen MUST run before set_info_plist_value below. If
+    # project.yml carries `info.properties.CFBundleVersion` as a literal
+    # (the common single-target layout) then xcodegen overwrites
+    # Info.plist with that value every run — stamping the build number
+    # before xcodegen would silently get clobbered, and the archive would
+    # ship with the static plist value instead of the computed one. Build
+    # number always derives from the TestFlight remote anyway, so reading
+    # a freshly-reset local plist here is fine.
+    sh("cd #{IOS_DIR.shellescape} && xcodegen generate")
+
     marketing_version, local_max = read_plist_versions
 
     api_key = asc_api_key
@@ -125,12 +140,6 @@ platform :ios do
       set_info_plist_value(path: plist, key: "CFBundleVersion", value: build_number.to_s)
       UI.message("  #{plist.sub("#{ROOT_DIR}/", '')} -> #{build_number}")
     end
-
-    # CHANGE ME / REMOVE ME — only for XcodeGen projects. Regenerate the
-    # .xcodeproj from project.yml before archiving. Delete this line if the
-    # .xcodeproj is committed rather than generated. fastlane's sh runs from
-    # the fastlane/ dir, so cd explicitly.
-    sh("cd #{IOS_DIR.shellescape} && xcodegen generate")
 
     xcargs = signing_xcargs
     archive_path = File.join(BUILD_ROOT, "archives", "#{SCHEME}-#{marketing_version}-#{build_number}.xcarchive")
