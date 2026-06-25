@@ -1,0 +1,4 @@
+interface:
+  display_name: "Hyperstack MCP Connector"
+  short_description: "Expose a Convex action as an OAuth (Clerk) remote MCP tool for Claude/ChatGPT"
+  default_prompt: "Use $hyperstack-mcp-connector to expose a Convex action as an OAuth-secured remote MCP tool that Claude and ChatGPT can call as the signed-in user, with Clerk as the authorization server on a Next.js + Vercel app."

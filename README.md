@@ -36,6 +36,8 @@ npx skills add hypersocialinc/agent-skills --all
   Build streaming text agents on Convex with Vercel AI SDK, persisted run state, tool traces, and polished client UX patterns like thinking dots and character reveal.
 - `convex-r2-media`
   Use Convex with Cloudflare R2 correctly for durable public media delivery and migrations away from signed storage URLs.
+- `hyperstack-mcp-connector`
+  Expose a Convex action as an OAuth-secured remote MCP tool that Claude, ChatGPT, or any MCP client can call as the signed-in user. Clerk is the authorization server (`@clerk/mcp-tools`, dynamic client registration), `mcp-handler` serves the connector on Next.js/Vercel, and a short-lived RS256 bridge JWT (`sub` = Clerk user id) trusted by a Convex `customJwt` provider makes the action run with a real `ctx.auth` identity. Ships the route, the bridge signer + JWKS, the OAuth discovery routes, and the full setup checklist + gotchas.
 - `hyper-ui-skills`
   Route reusable UI pattern work for Expo and Next.js to focused implementation guides like `masked-fade-overlay`.
 - `swiftui-collapsible-pull-sheet`
