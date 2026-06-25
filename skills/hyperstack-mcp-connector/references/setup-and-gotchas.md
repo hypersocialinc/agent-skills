@@ -19,6 +19,7 @@ const providers = [
 if (process.env.CONVEX_BRIDGE_ISSUER && process.env.CONVEX_BRIDGE_JWKS_URL) {
   providers.push({
     type: "customJwt",
+    applicationID: "convex",                        // verifies the bridge JWT's `aud` (matches signConvexBridgeJwt)
     issuer: process.env.CONVEX_BRIDGE_ISSUER,      // == CONVEX_BRIDGE_ISSUER on the Next side
     jwks: process.env.CONVEX_BRIDGE_JWKS_URL,       // https://your-app.com/api/mcp/jwks
     algorithm: "RS256",
@@ -112,6 +113,10 @@ Clerk sign-in + consent → Allow → connected. Run `whoami` to confirm identit
   Treat "works in ChatGPT" as a thin adapter on top, not automatic.
 - **Cost:** Clerk machine/OAuth tokens are free in beta, priced at GA — confirm
   before relying on high volume.
+- **Key rotation:** the JWKS is cached (`max-age=3600`) and Convex caches it too.
+  When you rotate the keypair, **bump `CONVEX_BRIDGE_KID`** so new tokens carry a
+  new `kid`. Otherwise a stale cached JWKS (old key under the same `kid`) rejects
+  every bridge JWT for up to an hour with no clear symptom.
 
 ## Test the round-trip
 

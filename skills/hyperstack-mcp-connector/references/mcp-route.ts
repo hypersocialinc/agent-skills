@@ -42,19 +42,29 @@ async function verifyToken(_req: Request, bearer?: string): Promise<AuthInfo | u
   const clerkAuth = await auth({ acceptsToken: "oauth_token" });
   const info = await verifyClerkToken(clerkAuth, bearer);
   const userId = info?.extra?.userId as string | undefined;
-  if (!info || !userId) return undefined;
+  if (!info || !userId) return undefined; // no / invalid OAuth token
 
-  const user = await (await clerkClient()).users.getUser(userId);
-  const email = user.primaryEmailAddress?.emailAddress ?? null;
-  const { token: jwt } = await signConvexBridgeJwt({ subject: userId, email: email ?? undefined });
-  return { token: bearer, clientId: userId, scopes: (info.scopes ?? []) as string[], extra: { jwt, email } };
+  // The token is VALID past here. A throw now means a SERVER MISCONFIG (missing
+  // CLERK_SECRET_KEY, missing/malformed CONVEX_BRIDGE_* env), not an auth failure
+  // — log it loudly so a missing env var doesn't become a mystery 401.
+  try {
+    const user = await (await clerkClient()).users.getUser(userId);
+    const email = user.primaryEmailAddress?.emailAddress ?? null;
+    const { token: jwt } = await signConvexBridgeJwt({ subject: userId, email: email ?? undefined });
+    return { token: bearer, clientId: userId, scopes: (info.scopes ?? []) as string[], extra: { jwt, email } };
+  } catch (e) {
+    console.error("[mcp] token valid but bridge/user lookup failed — check env", e);
+    return undefined;
+  }
 }
 
 // A Convex client authenticated as the requesting user (so `ctx.auth` is real).
 function userConvex(extra: { authInfo?: { extra?: Record<string, unknown> } }): ConvexHttpClient | null {
   const jwt = extra.authInfo?.extra?.jwt as string | undefined;
   if (!jwt) return null;
-  const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+  const url = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!url) throw new Error("NEXT_PUBLIC_CONVEX_URL not set");
+  const convex = new ConvexHttpClient(url);
   convex.setAuth(jwt);
   return convex;
 }
@@ -76,19 +86,27 @@ const baseHandler = createMcpHandler(
           const result = await convex.action(doTheThing, { input: args.input as string });
           return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
         } catch (e) {
-          return { content: [{ type: "text" as const, text: `Error: ${(e as Error).message}` }], isError: true };
+          // Always log server-side (the model may hide the returned text). Raw
+          // e.message can leak internals — sanitize it for sensitive tools.
+          console.error("[mcp] do_the_thing failed", e);
+          const msg = e instanceof Error ? e.message : "unknown error";
+          return { content: [{ type: "text" as const, text: `Error: ${msg}` }], isError: true };
         }
       },
     );
 
-    // A free identity probe — handy for confirming OAuth round-trips end to end.
+    // An identity probe — confirms the OAuth round-trip end to end. It is still
+    // auth-required (withMcpAuth, below); reporting `authenticated` lets you tell
+    // "not authenticated" apart from "authenticated but no email on file".
     server.tool(
       "whoami",
       "Show the identity this connector is authenticated as.",
       {},
       async (_args, extra: { authInfo?: { extra?: Record<string, unknown> } }) => {
         const email = (extra.authInfo?.extra?.email as string | null) ?? null;
-        return { content: [{ type: "text" as const, text: JSON.stringify({ email }) }] };
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify({ authenticated: !!extra.authInfo, email }) }],
+        };
       },
     );
   },

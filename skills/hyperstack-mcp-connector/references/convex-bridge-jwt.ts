@@ -36,8 +36,12 @@ async function privateKey() {
   return importPKCS8(pem.replace(/\\n/g, "\n"), ALG, { extractable: true });
 }
 
-// Mint a Convex-acceptable JWT for a user. subject = Clerk user id; email drives
-// any role checks that read the email claim.
+// Audience claim. Pair with `applicationID: "convex"` on the Convex customJwt
+// provider (setup-and-gotchas.md §1) so Convex verifies `aud` too, not just `iss`.
+const AUDIENCE = "convex";
+
+// Mint a Convex-acceptable JWT for a user. subject = Clerk user id; `email` is
+// added as a claim so Convex functions that read it (e.g. for role checks) can.
 export async function signConvexBridgeJwt(opts: {
   subject: string;
   email?: string;
@@ -48,11 +52,12 @@ export async function signConvexBridgeJwt(opts: {
   const token = await new SignJWT({ email: opts.email })
     .setProtectedHeader({ alg: ALG, kid: kid(), typ: "JWT" })
     .setIssuer(issuer())
+    .setAudience(AUDIENCE)
     .setSubject(opts.subject)
     .setIssuedAt(now)
     .setExpirationTime(exp)
     .sign(await privateKey());
-  return { token, expiresAt: exp * 1000 };
+  return { token, expiresAt: exp * 1000 }; // expiresAt is epoch MILLISECONDS (exp is seconds)
 }
 
 // Public JWK set served at /api/mcp/jwks (see jwks-route.ts) so Convex can verify
