@@ -49,7 +49,9 @@ user identity (skip OAuth entirely).
 2. **MCP route** — copy `references/mcp-route.ts` to `app/api/mcp/route.ts` (static,
    not `[transport]` — see the file's header for why). Replace the `do_the_thing`
    tool with one `server.tool(...)` per Convex action you expose. Keep `whoami`.
-3. **Discovery metadata** — add the two routes in `references/well-known-routes.md`.
+3. **Discovery metadata** — add the two routes in `references/well-known-routes.md`
+   (use Clerk's official handlers: `authServerMetadataHandlerClerk`,
+   `protectedResourceHandlerClerk`, `metadataCorsOptionsRequestHandler`).
 4. **Convex bridge** — copy `references/convex-bridge-jwt.ts` to `lib/` and
    `references/jwks-route.ts` to `app/api/mcp/jwks/route.ts`. Generate an RS256
    keypair; set `CONVEX_BRIDGE_*` env (see `setup-and-gotchas.md`).
@@ -58,7 +60,11 @@ user identity (skip OAuth entirely).
 6. **Make the new routes public** in `clerkMiddleware` (`setup-and-gotchas.md` §2).
 7. **Enable Dynamic Client Registration** in the Clerk dashboard — required, one
    manual toggle (`setup-and-gotchas.md` §3).
-8. **Deploy** to Vercel, then **add the connector** by URL in Claude/ChatGPT
+8. **Monorepo on Vercel** (if applicable) — set Root Directory to the web subdirectory
+   in Vercel Project Settings. Update `vercel.json` install command to install both
+   root and web dependencies: `npm ci -C .. --legacy-peer-deps && npm ci --legacy-peer-deps`
+   (see `setup-and-gotchas.md` §5 for monorepo deployment).
+9. **Deploy** to Vercel, then **add the connector** by URL in Claude/ChatGPT
    (`setup-and-gotchas.md` §4).
 
 ## Reference files
@@ -82,6 +88,14 @@ user identity (skip OAuth entirely).
   discovery loop.
 - **Convex `sub` mismatch** → tools authenticate but owner-scoped queries return
   nothing. The bridge `sub` must be what your Convex functions key users on.
+- **Monorepo: installing only web dependencies** → if the root `package.json`
+  declares `convex` but vercel.json doesn't install it, the build fails. Root
+  dependencies must be installed too (use `npm ci -C ..` before `npm ci` in the
+  install command).
+- **Monorepo: old custom OAuth handlers** → use Clerk's official `@clerk/mcp-tools`
+  handlers (`authServerMetadataHandlerClerk`, `protectedResourceHandlerClerk`,
+  `metadataCorsOptionsRequestHandler`) instead of hand-rolled metadata routes. They
+  handle DCR, CORS, and scope discovery correctly.
 
 See `references/setup-and-gotchas.md` for the full gotcha list (Clerk version,
 opaque-vs-JWT tokens, ChatGPT caveats, token pricing) and the round-trip test.

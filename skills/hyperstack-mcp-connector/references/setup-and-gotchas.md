@@ -77,7 +77,37 @@ authorization server must allow DCR.
   client id/secret into the client's "advanced" connector fields — avoids the
   public endpoint but doesn't scale to "anyone adds it."
 
-## 4. Deploy, then add the connector
+## 4. Monorepo on Vercel (if applicable)
+
+If Next.js lives in a `web/` subdirectory alongside other root packages (Convex,
+etc.), configure Vercel for the monorepo:
+
+1. **Project Settings → Build and Deployment** → set **Root Directory** to `web/`
+   (so Vercel detects Next.js at the right level).
+2. **vercel.json** — update the install command to install both root and web
+   dependencies (so imports like `convex/server` resolve at build time):
+   ```json
+   {
+     "installCommand": "npm ci -C .. --legacy-peer-deps && npm ci --legacy-peer-deps",
+     "buildCommand": "npm run build",
+     "outputDirectory": ".next"
+   }
+   ```
+   The `npm ci -C ..` installs root `package.json` into the parent's `node_modules`;
+   `npm ci` then installs web `package.json` into `web/node_modules`. This lets
+   webpack resolve imports from files outside `web/` (e.g. `convex/_generated/api.js`
+   importing `convex/server`).
+3. **TypeScript path aliases** — use `tsconfig.json` to map imports back to the root:
+   ```json
+   "compilerOptions": {
+     "paths": {
+       "@convex/*": ["../convex/*"]
+     }
+   }
+   ```
+   This lets the web app import types from the parent Convex directory.
+
+## 5. Deploy, then add the connector
 
 ```bash
 vercel --prod
@@ -98,6 +128,10 @@ Clerk sign-in + consent → Allow → connected. Run `whoami` to confirm identit
   That field name is version-sensitive — if a newer version moves it, `verifyToken`
   returns `undefined` and **every call 401s with no other symptom**. Pin the
   version, or log `info` once and confirm where the user id lands.
+- **Use Clerk's official OAuth handlers:** use `authServerMetadataHandlerClerk`,
+  `protectedResourceHandlerClerk`, and `metadataCorsOptionsRequestHandler` from
+  `@clerk/mcp-tools/next` for the metadata routes. They handle DCR, CORS,
+  and RFC compliance. Don't build custom metadata endpoints.
 - **Resource = origin:** `protectedResourceHandlerClerk` reports the resource as
   the request origin. The MCP route's `resourceMetadataPath` must point at the
   protected-resource route you actually created, or discovery 401-loops.
@@ -108,6 +142,10 @@ Clerk sign-in + consent → Allow → connected. Run `whoami` to confirm identit
 - **`opaque` vs JWT OAuth tokens:** leave Clerk's "Generate access tokens as JWTs"
   OFF. `verifyClerkToken` validates opaque tokens via Clerk introspection — no
   extra config needed.
+- **Monorepo: install both root and web deps.** In vercel.json, the install command
+  must install both `package.json` files: `npm ci -C .. --legacy-peer-deps && npm ci --legacy-peer-deps`.
+  Otherwise, root dependencies (like `convex`) won't be available at build time, causing
+  module resolution errors when webpack tries to resolve imports from files outside `web/`.
 - **ChatGPT:** the same server works, but ChatGPT's Apps SDK has its own metadata
   conventions and (for some connector types) expects `search` + `fetch` tools.
   Treat "works in ChatGPT" as a thin adapter on top, not automatic.
