@@ -1,6 +1,6 @@
 ---
 name: hyperstack-mcp-connector
-description: Use when exposing a Convex action as an OAuth-secured tool that Claude, ChatGPT, or another MCP client can call as the signed-in user — i.e. building a remote/hosted MCP connector for a Next.js + Convex + Clerk app on Vercel, adding Clerk OAuth to an MCP server, or wiring a "Send to <your app>" / "do X in <your app>" connector. Stack-specific: Next.js + Convex + Clerk + Vercel.
+description: Use when exposing a Convex action as an OAuth-secured tool that Claude, ChatGPT, or another MCP client can call as the signed-in user — i.e. building a remote/hosted MCP connector for a Next.js + Convex + Clerk app on Vercel, adding Clerk OAuth to an MCP server, or wiring a "Send to <your app>" / "do X in <your app>" connector. Stack-specific — Next.js + Convex + Clerk + Vercel.
 ---
 
 # Hyperstack MCP Connector
