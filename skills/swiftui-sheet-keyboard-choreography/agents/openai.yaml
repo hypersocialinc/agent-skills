@@ -1,4 +1,0 @@
-interface:
-  display_name: "SwiftUI Sheet + Keyboard Choreography"
-  short_description: "Open a SwiftUI sheet with the keyboard rising as one motion; fix staggered focus, composer bounce, and detent shove."
-  default_prompt: "Use $swiftui-sheet-keyboard-choreography to implement or fix an auto-focused text field in a SwiftUI sheet so the keyboard co-animates with the presentation."

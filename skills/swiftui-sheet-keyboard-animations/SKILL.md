@@ -1,5 +1,5 @@
 ---
-name: swiftui-sheet-keyboard-choreography
+name: swiftui-sheet-keyboard-animations
 description: "Use when a SwiftUI sheet should open with the keyboard already rising (auto-focused TextField/composer) and the animations stagger — sheet settles first, keyboard pops late, the input bar bounces up-then-down, focus silently fails, or the keyboard appears then immediately drops. Also use when a keyboard-focused sheet's dismissal should retract the keyboard together with the sheet. Symptoms: '@FocusState in .task/.onAppear does nothing', 'keyboard appears after a visible gap', 'composer overshoots above the keyboard and settles back', 'medium detent sheet jumps to full height when keyboard shows'."
 ---
 
