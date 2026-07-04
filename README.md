@@ -37,7 +37,7 @@ npx skills add hypersocialinc/agent-skills --all
 - `convex-r2-media`
   Use Convex with Cloudflare R2 correctly for durable public media delivery and migrations away from signed storage URLs.
 - `hyperstack-mcp-connector`
-  Expose a Convex action as an OAuth-secured remote MCP tool that Claude, ChatGPT, or any MCP client can call as the signed-in user. Clerk is the authorization server (`@clerk/mcp-tools`, dynamic client registration), `mcp-handler` serves the connector on Next.js/Vercel, and a short-lived RS256 bridge JWT (`sub` = Clerk user id) trusted by a Convex `customJwt` provider makes the action run with a real `ctx.auth` identity. Ships the route, the bridge signer + JWKS, the OAuth discovery routes, and the full setup checklist + gotchas.
+  Expose Convex functions as an OAuth-secured remote MCP connector that Claude, ChatGPT, or any MCP client can call as the signed-in user — hosted entirely inside Convex via the `convex-mcp-gateway` component (no separate web server, no bridge JWT, no keypair). Clerk is the authorization server (dynamic client registration); the gateway validates Clerk's opaque OAuth token via its OIDC userinfo endpoint and injects the caller into each tool, so owner-scoped Convex functions run as that user. Ships the tool descriptors, the internal tool impls, the `http.ts` mount + OAuth discovery, and the full setup checklist + gotchas.
 - `hyper-ui-skills`
   Route reusable UI pattern work for Expo and Next.js to focused implementation guides like `masked-fade-overlay`.
 - `swiftui-collapsible-pull-sheet`
