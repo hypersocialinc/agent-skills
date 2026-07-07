@@ -1,107 +1,117 @@
 ---
 name: hyperstack-mcp-connector
-description: Use when exposing a Convex action as an OAuth-secured tool that Claude, ChatGPT, or another MCP client can call as the signed-in user — i.e. building a remote/hosted MCP connector for a Next.js + Convex + Clerk app on Vercel, adding Clerk OAuth to an MCP server, or wiring a "Send to <your app>" / "do X in <your app>" connector. Stack-specific — Next.js + Convex + Clerk + Vercel.
+description: Use when exposing Convex functions as OAuth-secured tools that Claude, ChatGPT, or another MCP client can call as the signed-in user — i.e. building a remote/hosted MCP connector for a Convex + Clerk app, adding Clerk OAuth to an MCP server, or wiring a "save to / do X in / recall from <your app>" connector. Stack-specific — Convex + Clerk.
 ---
 
 # Hyperstack MCP Connector
 
 ## Overview
 
-Turn a Convex action into a tool that Claude and ChatGPT can call **as the
+Expose Convex functions as tools that Claude and ChatGPT can call **as the
 signed-in user**, over a hosted remote MCP server with real OAuth. One server
-works across every MCP client.
+works across every MCP client. The whole thing lives **inside Convex** — no
+separate web server, no bridge, no keypair.
 
-Three layers, each delegated to a library so there is little custom auth code:
+Built on the **`convex-mcp-gateway`** component. It hosts the MCP server as a
+Convex `httpAction`, handles the JSON-RPC/Streamable-HTTP protocol, the OAuth
+discovery doc, and an audit log. You supply three things:
 
-1. **MCP transport** — `mcp-handler` exposes tools over Streamable HTTP at
-   `/api/mcp` on Next.js/Vercel.
-2. **OAuth** — **Clerk is the authorization server** (`@clerk/mcp-tools`). It
-   handles dynamic client registration, authorize, token, and discovery
-   metadata. The route just *verifies* Clerk's access token.
-3. **Convex bridge** — verify the Clerk token → mint a short-lived RS256 JWT
-   whose `sub` is the Clerk user id → call Convex with it. Convex trusts that
-   JWT via a `customJwt` provider, so the action runs with a real `ctx.auth`
-   identity and every owner-scoped function works unchanged.
+1. **Tools** — `defineMcpQuery` / `defineMcpMutation` / `defineMcpAction` map a
+   Convex function to a tool. Each identity-scoped tool takes an injected
+   `caller` arg (`identityArg`), because Convex strips `ctx.auth` across the
+   component boundary — so you scope on `caller.subject`, not `ctx.auth`.
+2. **Identity** — a `resolveIdentity` that validates Clerk's **opaque** OAuth
+   access token at Clerk's OIDC **userinfo** endpoint and returns
+   `{ subject, claims }`. Clerk is the OAuth authorization server (with Dynamic
+   Client Registration); the gateway is the resource server.
+3. **Mount** — one `httpAction` in `convex/http.ts` that calls
+   `gateway.handleMcpRequest(...)`, plus the protected-resource discovery route.
 
 ```
-Claude/ChatGPT --OAuth--> Clerk (authorization server)
-      |  access token
+Claude/ChatGPT --OAuth (DCR)--> Clerk (authorization server)
+      |  opaque access token
       v
-/api/mcp (mcp-handler + verifyClerkToken)  --mint bridge JWT (sub=clerk user)-->
-      Convex action (ctx.auth == that user)
+convex.site/mcp  (gateway httpAction, requireAuth)
+      |  resolveIdentity → Clerk userinfo → { subject }
+      v
+gateway injects `caller` → internal Convex fn scopes by caller.subject
+      (runs as that user; every owner-scoped function works unchanged)
 ```
 
 ## When to use
 
-- You want an AI client to *do something* in your app (create, import, fetch,
+- You want an AI client to *do something* in your app (save, fetch, recall,
   trigger) and have it run as the actual user.
-- You have a Next.js + Convex + Clerk app on Vercel (the "hyperstack").
+- Your backend is **Convex + Clerk** — Convex is your source of truth.
 - You want it addable in Claude **and** ChatGPT without per-client backends.
 
-**Not for:** local stdio MCP servers (no OAuth needed — a token is enough);
-apps not on Convex+Clerk (the bridge assumes both); read-only public data with no
-user identity (skip OAuth entirely).
+**Not for:** local stdio MCP servers (no OAuth needed — a token is enough); apps
+not on Convex+Clerk (the identity resolver assumes Clerk; the tool model assumes
+Convex components); read-only public data with no user identity (skip OAuth
+entirely).
+
+> Why not host the MCP server in a Next.js/Vercel route and bridge to Convex? You
+> can, but for a Convex-centric app it adds a separate server, a signed bridge JWT,
+> a JWKS endpoint, and key rotation — all to reproduce an identity Convex can
+> already carry. The gateway keeps everything in `convex/`.
 
 ## Build steps
 
-1. **Install:** `mcp-handler @clerk/mcp-tools jose @modelcontextprotocol/sdk`
-   (pin `@clerk/mcp-tools` — the user-id field is version-sensitive; see gotchas).
-2. **MCP route** — copy `references/mcp-route.ts` to `app/api/mcp/route.ts` (static,
-   not `[transport]` — see the file's header for why). Replace the `do_the_thing`
-   tool with one `server.tool(...)` per Convex action you expose. Keep `whoami`.
-3. **Discovery metadata** — add the two routes in `references/well-known-routes.md`
-   (use Clerk's official handlers: `authServerMetadataHandlerClerk`,
-   `protectedResourceHandlerClerk`, `metadataCorsOptionsRequestHandler`).
-4. **Convex bridge** — copy `references/convex-bridge-jwt.ts` to `lib/` and
-   `references/jwks-route.ts` to `app/api/mcp/jwks/route.ts`. Generate an RS256
-   keypair; set `CONVEX_BRIDGE_*` env (see `setup-and-gotchas.md`).
-5. **Trust the bridge in Convex** — add the `customJwt` provider + Convex env
-   (`setup-and-gotchas.md` §1).
-6. **Make the new routes public** in `clerkMiddleware` (`setup-and-gotchas.md` §2).
-7. **Enable Dynamic Client Registration** in the Clerk dashboard — required, one
-   manual toggle (`setup-and-gotchas.md` §3).
-8. **Monorepo on Vercel** (if applicable) — set Root Directory to the web subdirectory
-   in Vercel Project Settings. Update `vercel.json` install command to install both
-   root and web dependencies: `npm ci -C .. --legacy-peer-deps && npm ci --legacy-peer-deps`
-   (see `setup-and-gotchas.md` §5 for monorepo deployment).
-9. **Deploy** to Vercel, then **add the connector** by URL in Claude/ChatGPT
-   (`setup-and-gotchas.md` §4).
+1. **Install + register:** `npm install convex-mcp-gateway`, then `app.use(mcpGateway)`
+   in `convex/convex.config.ts` (`setup-and-gotchas.md` §1).
+2. **Tools** — copy `references/mcp.ts` to `convex/mcp.ts`. Replace the sample
+   tools with one `defineMcp{Query,Mutation,Action}` per function you expose. Every
+   identity-scoped tool declares `caller: mcpCallerValidator` + `identityArg: "caller"`
+   and points `fn` at an **internal** function. Keep `authorize`, `resolveClerkIdentity`,
+   and `initializeInstructions`.
+3. **Tool impls** — copy `references/mcp-tools.ts` to `convex/mcpTools.ts`. These are
+   `internalQuery`/`internalMutation`/`internalAction`s that owner-scope by
+   `caller.subject` (map it to your user via whatever index keys users on the Clerk id).
+4. **Mount** — merge `references/http.ts` into `convex/http.ts` (the `/mcp` routes +
+   protected-resource discovery + `requireAuth` + exposed headers).
+5. **Env** — set `MCP_AUTH_SERVER_URL` (your Clerk issuer) per deployment, or rely on
+   an existing `CLERK_JWT_ISSUER_DOMAIN` (`setup-and-gotchas.md` §2).
+6. **Enable Dynamic Client Registration** in the Clerk dashboard — required, one
+   manual toggle; leave "access tokens as JWTs" OFF (`setup-and-gotchas.md` §3).
+7. **Deploy** (`npx convex deploy`), then **add the connector** at
+   `https://<deployment>.convex.site/mcp` in Claude/ChatGPT (`setup-and-gotchas.md` §4).
 
 ## Reference files
 
-| File | What it is |
-|------|------------|
-| `references/mcp-route.ts` | The connector route: `mcp-handler` + `verifyClerkToken` + bridge mint + sample action-backed tool + `whoami` |
-| `references/convex-bridge-jwt.ts` | The jose RS256 signer + public JWKS (the Clerk→Convex bridge) |
-| `references/jwks-route.ts` | Public JWKS endpoint Convex reads to verify bridge JWTs |
-| `references/well-known-routes.md` | The two OAuth discovery metadata routes |
-| `references/setup-and-gotchas.md` | Convex `auth.config`, middleware, env, Clerk DCR, deploy, add-connector, gotchas, tests |
+| File | Goes to | What it is |
+|------|---------|------------|
+| `references/mcp.ts` | `convex/mcp.ts` | gateway + tool descriptors + `authorize` + `resolveClerkIdentity` (Clerk userinfo) + `initializeInstructions` |
+| `references/mcp-tools.ts` | `convex/mcpTools.ts` | the **internal** tool impls, owner-scoped by the injected `caller.subject` |
+| `references/http.ts` | `convex/http.ts` | the `/mcp` mount + OAuth discovery route + `requireAuth` + exposed headers |
+| `references/setup-and-gotchas.md` | — | `convex.config`, env, Clerk DCR, deploy, add-connector, gotchas, round-trip test |
 
 ## Common mistakes
 
-- **Skipping Dynamic Client Registration** in Clerk → the client can't register,
-  OAuth never starts. The `registration_endpoint` must appear in the
-  authorization-server metadata.
-- **Forgetting the public-route exemptions** → `/api/mcp`, `/.well-known/*`, and
-  the JWKS endpoint get caught by `clerkMiddleware` and 404/redirect.
-- **`resourceMetadataPath` not matching** the protected-resource route → 401
-  discovery loop.
-- **Convex `sub` mismatch** → tools authenticate but owner-scoped queries return
-  nothing. The bridge `sub` must be what your Convex functions key users on.
-- **Monorepo: installing only web dependencies** → if the root `package.json`
-  declares `convex` but vercel.json doesn't install it, the build fails. Root
-  dependencies must be installed too (use `npm ci -C ..` before `npm ci` in the
-  install command).
-- **Monorepo: old custom OAuth handlers** → use Clerk's official `@clerk/mcp-tools`
-  handlers (`authServerMetadataHandlerClerk`, `protectedResourceHandlerClerk`,
-  `metadataCorsOptionsRequestHandler`) instead of hand-rolled metadata routes. They
-  handle DCR, CORS, and scope discovery correctly.
+- **Reading the user from `ctx.auth` in a tool** → always null. The gateway strips
+  `ctx.auth` across the component boundary; use the injected `caller` arg.
+- **Exposing tool functions as `public` (api.*)** → any Convex client can call them
+  with a forged `caller` and read another user's data. Make them `internal`.
+- **Skipping Dynamic Client Registration** in Clerk (or leaving it unsaved) → the
+  client can't register, OAuth never starts. `registration_endpoint` must appear in
+  Clerk's **oauth-authorization-server** metadata (not openid-configuration).
+- **Omitting `requireAuth: true`** → browser clients (claude.ai) see an empty
+  `tools/list`, think they're connected, and never start OAuth (they only react to a 401).
+- **Not exposing `mcp-session-id` / `www-authenticate`** on CORS → the browser client
+  can't read the session or the auth challenge.
+- **Convex `subject` mismatch** → tools authenticate but owner-scoped queries return
+  nothing. `caller.subject` (the Clerk user id) must be what your functions key on.
+- **Weak tool descriptions** → the model defaults to web search instead of your
+  connector. Name the concrete data and say *when* to use it; set
+  `initializeInstructions`. Re-sync by starting a **new** chat after changing them.
 
-See `references/setup-and-gotchas.md` for the full gotcha list (Clerk version,
-opaque-vs-JWT tokens, ChatGPT caveats, token pricing) and the round-trip test.
+See `references/setup-and-gotchas.md` for the full gotcha list (opaque-vs-JWT
+tokens, the circular-type annotation, ChatGPT caveats, DCR verification) and the
+round-trip test.
 
 ## Reference implementation
 
-Hyperdecks' "Send to Hyperdecks" connector (imports a Claude Design deck into
-Hyperdecks from inside Claude Design) is built exactly this way and runs in
-production — use it as the worked example, but keep this skill stack-generic.
+Padscanner's connector (github.com/tfohlmeister/convex-mcp-gateway is the
+component; padscanner exposes its rental-search tools to Claude as the signed-in
+user) is built exactly this way and runs in production — the same pattern powers a
+savethis "save & recall from Claude" connector. Use it as the worked example, but
+keep this skill stack-generic.
