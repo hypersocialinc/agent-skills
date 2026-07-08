@@ -1,0 +1,4 @@
+interface:
+  display_name: "Clerk Invite-Only Access"
+  short_description: "Make a Clerk app invite-only: waitlist mode, ticket bypass for in-app invites, revoke linkage."
+  default_prompt: "Use $clerk-invite-only-access to gate sign-ups behind a waitlist and make in-app email invites bypass it via Clerk invitations."
