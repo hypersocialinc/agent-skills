@@ -42,6 +42,10 @@ npx skills add hypersocialinc/agent-skills --all
   Route reusable UI pattern work for Expo and Next.js to focused implementation guides like `masked-fade-overlay`.
 - `swiftui-collapsible-pull-sheet`
   Build custom SwiftUI pull sheets that collapse into compact pills, expand with drag or tap, morph their surface and content, and coordinate surrounding iOS chrome.
+- `swiftui-sheet-keyboard-animations`
+  Open a SwiftUI sheet with the keyboard rising as one motion (iMessage-compose style) and dismiss them together: UIKit prewarm field, land-gated `@FocusState` handoff, `.large`-detent rule, and accessory freezing — with the failure modes each piece prevents.
+- `swiftui-voice-first-agent-chat`
+  Build a voice-first agent chat: a dock with a hold-to-talk mic pill, a speech-reactive lit-glass orb overlay with live captioning, and release-to-send into a full-screen streaming agent chat over the pushed-back home. Ships the `SpeechAnalyzer`/`SFSpeechRecognizer` two-backend facade (asset reservation, quick-tap hold token, audio-session actor, level pipeline), the orb's render recipe and press-latency rules, the chat presentation (card backdrop, screen-height transitions, drag dismiss, dock-mode bar morph), agent seeding/streaming patterns for Convex+Clerk apps, and the mandatory mic error boundary.
 - `transparent-video`
   Generate a short looping transparent video (`hvc1` HEVC with alpha) from a single still image. SeedDance 2 image-to-video (with optional closed-loop end-frame anchoring) → BiRefNet v2 Matting per frame in parallel → HEVC alpha encode. ~$0.65 and 3–5 min for a 5s 720² loop that plays natively in iOS, web, and Android.
 - `instax-mini-link-ble`
