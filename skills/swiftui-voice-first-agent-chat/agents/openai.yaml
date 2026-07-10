@@ -1,0 +1,4 @@
+interface:
+  display_name: "SwiftUI Voice-First Agent Chat"
+  short_description: "Hold-to-talk mic dock, speech-reactive glass orb, release-to-send into a full-screen streaming agent chat — with the SpeechAnalyzer/SFSpeechRecognizer facade and all its iOS 26 traps."
+  default_prompt: "Use $swiftui-voice-first-agent-chat to build or review a voice-first chat interface: push-to-talk capture with live transcription, a listening orb overlay, and a full-screen agent chat presentation."
