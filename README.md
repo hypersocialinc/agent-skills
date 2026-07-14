@@ -65,6 +65,12 @@ These follow the same `npx skills add` install pattern but live in their tool's 
 npx skills add hypersocialinc/instax-mini-link-3-print-harness --skill instax-print --agent claude-code
 ```
 
+- [`hypershots`](https://github.com/hypersocialinc/hypershots) — Spec-reliable App Store screenshots: deterministic HTML/CSS panels (exact store canvases, device-frame geometry, localization with auto-fit, a hard validator) plus optional AI-generated cutout stickers and a protected style grade. Hosted in `hypersocialinc/hypershots` so the skill ships alongside its render/validate harness and the annotated example set.
+
+```bash
+npx skills add hypersocialinc/hypershots --skill hypershots --agent claude-code
+```
+
 ## Repo Layout
 
 - `skills/<skill-name>/SKILL.md`
