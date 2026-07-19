@@ -32,6 +32,8 @@ npx skills add hypersocialinc/agent-skills --all
 
 ## Included Skills
 
+- `imessage-convex-agent`
+  Build an iMessage AI agent channel on Convex via Sendblue -- webhook parsing, dedupe + enqueue pipeline, account linking with app-issued codes, the chat-ownership binding trap, typing indicators, and card-image sends that sidestep iMessage's sender-side unfurling.
 - `convex-streaming-agents`
   Build streaming text agents on Convex with Vercel AI SDK, persisted run state, tool traces, and polished client UX patterns like thinking dots and character reveal.
 - `convex-r2-media`

@@ -1,0 +1,4 @@
+interface:
+  display_name: "iMessage Convex Agent"
+  short_description: "iMessage AI agent channel on Convex via Sendblue"
+  default_prompt: "Use $imessage-convex-agent to add a text-this-number iMessage agent channel (Sendblue webhook, account linking, typing indicators, card images) to a Convex project."
