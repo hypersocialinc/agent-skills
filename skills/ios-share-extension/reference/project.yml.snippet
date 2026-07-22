@@ -1,0 +1,55 @@
+# XcodeGen (project.yml) wiring for the Share Extension.
+# Two edits: (1) embed the extension in the app + share the Shared/ sources with the app,
+# (2) declare the app-extension target itself.
+
+targets:
+  # ---- your existing app target ----
+  MyApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: MyApp
+      - path: Shared          # (2) SharedAuth.swift + SharedInbox.swift compiled into BOTH targets
+    dependencies:
+      - package: Clerk
+        product: ClerkKit
+      - package: Clerk
+        product: ClerkKitUI
+      - package: ConvexMobile
+        product: ConvexMobile
+      # (1) Embeds the Share Extension into the app bundle. Without this the share
+      #     sheet never offers your app.
+      - target: ShareExtension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.myapp
+        CODE_SIGN_ENTITLEMENTS: MyApp/MyApp.entitlements   # must include App Group + keychain-access-group
+
+  # ---- the new extension target ----
+  ShareExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: ShareExtension
+      - path: Shared                                   # SharedAuth + SharedInbox
+      # Share ONLY the auth/config the extension needs — not the whole app. Keeps the
+      # extension small and fast to launch.
+      - path: MyApp/Support/Config.swift
+      - path: MyApp/Store/ClerkConvexAuthProvider.swift
+    dependencies:
+      - package: Clerk
+        product: ClerkKit          # ClerkKit only; the extension has no ClerkKitUI screens
+      - package: ConvexMobile
+        product: ConvexMobile
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.myapp.ShareExtension
+        PRODUCT_NAME: ShareExtension
+        GENERATE_INFOPLIST_FILE: NO                    # keep our NSExtension activation rule
+        INFOPLIST_FILE: ShareExtension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: ShareExtension/ShareExtension.entitlements
+        TARGETED_DEVICE_FAMILY: "1"                    # iPhone; use "1,2" to include iPad
+        # Export compliance: extension uses only standard HTTPS/TLS.
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
+
+# After editing: re-run `xcodegen generate` (or your project.yml → xcodeproj step).
