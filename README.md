@@ -38,6 +38,8 @@ npx skills add hypersocialinc/agent-skills --all
   Build streaming text agents on Convex with Vercel AI SDK, persisted run state, tool traces, and polished client UX patterns like thinking dots and character reveal.
 - `convex-r2-media`
   Use Convex with Cloudflare R2 correctly for durable public media delivery and migrations away from signed storage URLs.
+- `clerk-invite-only-access`
+  Make a Clerk app invite-only: flip the instance's sign-up mode to waitlist (dedicated `<Waitlist />` landing, middleware routing, dev+prod config via the clerk CLI), and keep in-app "invite by email" features working by minting Clerk invitations whose ticket links bypass the gate — with revoke linkage so closing an app invite also kills the ticket. Ships production middleware/page/Convex code and the ops one-liners.
 - `hyperstack-mcp-connector`
   Expose Convex functions as an OAuth-secured remote MCP connector that Claude, ChatGPT, or any MCP client can call as the signed-in user — hosted entirely inside Convex via the `convex-mcp-gateway` component (no separate web server, no bridge JWT, no keypair). Clerk is the authorization server (dynamic client registration); the gateway validates Clerk's opaque OAuth token via its OIDC userinfo endpoint and injects the caller into each tool, so owner-scoped Convex functions run as that user. Ships the tool descriptors, the internal tool impls, the `http.ts` mount + OAuth discovery, and the full setup checklist + gotchas.
 - `hyper-ui-skills`
