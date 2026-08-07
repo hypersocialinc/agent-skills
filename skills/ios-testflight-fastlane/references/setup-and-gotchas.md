@@ -31,6 +31,23 @@ Using an API key (not Apple ID + password) is what makes uploads scriptable and
 2FA-free. `upload_to_testflight` and `latest_testflight_build_number` both
 authenticate with it.
 
+#### Reuse ONE key across all apps (don't make a key per app)
+
+App Store Connect API keys are **team-scoped, not app-scoped**: a single key with
+the App Manager role can upload builds and manage TestFlight for *every* app in
+the team. Do not generate a new key per app — it just multiplies `.p8` files to
+track. Instead:
+
+- Keep **one shared team key** and store its `.p8` at a stable, shared location:
+  `~/.appstoreconnect/private_keys/AuthKey_<KEYID>.p8` (a path fastlane/Xcode
+  also auto-search). `chmod 600` it.
+- `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID`, and `ASC_API_KEY_PATH` are then
+  **identical in every app's `.env.testflight.local`**. The key id and issuer id
+  are not secret (the `.p8` is); only `ASC_APPLE_ID` changes per app.
+- The `.p8` downloads only once at creation. If a teammate already made the
+  shared key, copy their `.p8` rather than regenerating (regenerating revokes the
+  old one and breaks everyone else's setup).
+
 ### 3. Find the numeric app id
 
 App Store Connect → the app → **App Information** → **Apple ID**. This is a
@@ -69,6 +86,23 @@ Versioning is plist-based and lives entirely in the lane:
 `manageAppVersionAndBuildNumber: false` in the export options stops Xcode from
 re-touching versions during export, leaving the lane authoritative.
 
+### Projects with no physical Info.plist (`GENERATE_INFOPLIST_FILE`)
+
+Many modern projects (and XcodeGen setups) set `GENERATE_INFOPLIST_FILE = YES`
+and define version + Info keys via build settings (`MARKETING_VERSION`,
+`CURRENT_PROJECT_VERSION`, `INFOPLIST_KEY_*`) — so there is **no `Info.plist` file
+to stamp** and the `PLISTS` approach above does not apply. For these, adapt the
+lane to:
+
+- read the marketing version and current build from the build settings source of
+  truth (e.g. `project.yml` for XcodeGen, or `xcodebuild -showBuildSettings`),
+  and
+- inject the computed build number at archive time via xcargs —
+  `CURRENT_PROJECT_VERSION=<n>` — instead of editing a plist. With
+  `GENERATE_INFOPLIST_FILE`, `xcodebuild` bakes that into the generated
+  `Info.plist`'s `CFBundleVersion`. This leaves `project.yml` unmodified (no
+  build-number churn in git).
+
 ### Multi-target apps
 
 List **one plist per target that ships in the build** in `PLISTS` — the app plus
@@ -98,6 +132,15 @@ plist.
 - **XcodeGen projects must be regenerated before archiving.** The lane runs
   `xcodegen generate` first so the `.xcodeproj` reflects `project.yml`. Delete
   that line for projects whose `.xcodeproj` is committed.
+- **Declare export compliance in the build, or every TestFlight build prompts
+  for it.** Without it, each uploaded build shows "App Encryption Documentation /
+  Missing Compliance" and can't be tested until answered by hand. If the app uses
+  only standard HTTPS/TLS (no proprietary or otherwise non-exempt cryptography),
+  set `ITSAppUsesNonExemptEncryption = NO` in `Info.plist` — or, for
+  `GENERATE_INFOPLIST_FILE` projects, the build setting
+  `INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO` (e.g. in `project.yml`). That
+  bakes the exemption in so the prompt never appears. Only declare this if it's
+  true — revisit if the app adds custom encryption.
 
 ## Adapting the Fastfile to a new project
 
